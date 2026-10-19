@@ -9,11 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /src
 COPY . .
 
-# Сборка идёт через make — вызов сборщика происходит из сборки образа,
-# как требует ТЗ. check-static падает, если бинарник оказался динамическим.
 RUN make clean && make && make check-static
 
-# Финальный образ: пустая файловая система плюс один файл.
 FROM scratch
 
 COPY --from=build /src/minibox /minibox

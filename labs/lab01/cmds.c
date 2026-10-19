@@ -49,10 +49,6 @@ cmd_name convert_to_enum(char arg[]) {
     return CMD_DEFAULT;
 }
 
-/*
- * write() имеет право записать МЕНЬШЕ, чем попросили (короткая запись),
- * и прерваться сигналом с EINTR. Без цикла копирование молча потеряет байты.
- */
 static int writen(int fd, const char *buf, size_t n) {
     while (n > 0) {
         ssize_t w = write(fd, buf, n);
@@ -123,8 +119,6 @@ int cmd_cat(int argc, char **argv) {
 
     int status = 0;
 
-    /* Ошибка на одном файле не должна прерывать остальные, но итоговый
-       код возврата обязан её отразить. */
     for (int i = 1; i < argc; i++) {
         int fd = open(argv[i], O_RDONLY);
         if (fd < 0) {
@@ -162,9 +156,6 @@ int cmd_cp(int argc, char **argv) {
         return 1;
     }
 
-    /* Права берём с исходного файла — иначе копия исполняемого файла
-       перестанет быть исполняемой. fstat по уже открытому дескриптору,
-       а не stat по имени: файл не подменят между вызовами. */
     struct stat st;
     mode_t mode = 0644;
     if (fstat(src_fd, &st) == 0) {
@@ -182,8 +173,6 @@ int cmd_cp(int argc, char **argv) {
 
     close(src_fd);
 
-    /* close() может вернуть ошибку отложенной записи — на сетевых ФС
-       именно здесь всплывает ENOSPC. Для cp это существенно. */
     if (close(dst_fd) < 0) {
         fprintf(stderr, "cp: %s: %s\n", dst_name, strerror(errno));
         status = 1;
@@ -227,8 +216,6 @@ int cmd_ls(int argc, char **argv) {
 
     int status = 0;
 
-    /* readdir возвращает NULL и в конце каталога, и при ошибке. Различить
-       можно только по errno, поэтому его сбрасывают перед вызовом. */
     while (true) {
         errno = 0;
         struct dirent *entry = readdir(dir);
@@ -259,7 +246,6 @@ int cmd_mkdir(int argc, char **argv) {
         return 1;
     }
 
-    /* 0777 — запрошенные права; реальные получатся после наложения umask. */
     if (mkdir(argv[1], 0777) < 0) {
         fprintf(stderr, "mkdir: %s: %s\n", argv[1], strerror(errno));
         return 1;
