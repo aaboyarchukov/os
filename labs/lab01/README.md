@@ -48,14 +48,52 @@ cat: nope.txt: No such file or directory
 
 ```bash
 docker build -t minibox .
-
-# разовый запуск
-printf 'echo привет\nls /\n' | docker run -i --rm minibox
-
-# работа с файлами хоста через том
-printf 'cat /w/a.txt\ncp /w/a.txt /w/b.txt\nls /w\n' \
-    | docker run -i --rm -v "$PWD:/w" minibox
 ```
+
+Сборка не требует ничего, кроме Docker: стадия `build` сама поднимает
+временный контейнер, вызывает в нём `make` и уничтожается.
+
+**Интерактивный запуск** — основной способ работы:
+
+```bash
+docker run -it --rm minibox
+```
+
+`-i` держит стандартный ввод открытым, `-t` выделяет терминал. Дальше
+команды набираются обычным образом, по одной на строку. Выход — `Ctrl-D`.
+
+```
+echo привет
+привет
+mkdir data
+ls
+.
+..
+data
+```
+
+Чтобы работать с файлами хоста, смонтируй каталог томом — внутри образа
+`FROM scratch` своих файлов нет:
+
+```bash
+docker run -it --rm -v "$PWD:/w" minibox
+```
+
+```
+cat /w/README.md
+cp /w/README.md /w/copy.md
+ls /w
+```
+
+**Неинтерактивный запуск** (скрипты, CI) — без `-t`:
+
+```bash
+printf 'echo привет\nls /\n' | docker run -i --rm minibox
+docker run -i --rm -v "$PWD:/w" minibox < script.txt
+```
+
+Флаг `-i` обязателен и здесь: без него стандартный ввод закрыт, и
+интерпретатор завершится сразу по EOF.
 
 Итоговый образ — около 1 МБ и содержит ровно один файл.
 
