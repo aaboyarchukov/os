@@ -1,0 +1,5 @@
+*.o
+*.d
+minibox
+tokenizer_test
+*.md

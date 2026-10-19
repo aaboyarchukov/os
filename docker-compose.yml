@@ -1,0 +1,17 @@
+services:
+  os:
+    build: .
+    image: os-course:latest
+    container_name: os-course
+    working_dir: /work
+    volumes:
+      - .:/work
+    # gdb / strace / ltrace need ptrace, which the default seccomp profile blocks
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    # keep the container alive so `docker compose exec` is instant
+    tty: true
+    stdin_open: true
+    command: sleep infinity
